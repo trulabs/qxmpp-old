@@ -57,6 +57,13 @@ static const char* marker_types[] = {
     "acknowledged"
 };
 
+static const char* hint_types[] = {
+    "no-permanent-storage",
+    "no-store",
+    "no-copy",
+    "allow-permanent-storage"
+};
+
 static const char *ns_xhtml = "http://www.w3.org/1999/xhtml";
 
 enum StampType
@@ -98,6 +105,9 @@ public:
     QString mucInvitationJid;
     QString mucInvitationPassword;
     QString mucInvitationReason;
+
+    // XEP-0334: Message Processing Hints
+    QList<QXmppMessage::Hint> hints;
 
     // XEP-0333: Chat Markers
     bool markable;
@@ -543,6 +553,19 @@ void QXmppMessage::parse(const QDomElement &element)
     // XEP-0224: Attention
     d->attentionRequested = element.firstChildElement("attention").namespaceURI() == ns_attention;
 
+    // XEP-0334: Message Processing Hints
+    // check for all the marker types
+    QDomElement hintElement;
+    for (int i = NoPermanentStorage; i <= AllowPermantStorage; i++)
+    {
+        hintElement = element.firstChildElement(hint_types[i]);
+        if (!hintElement.isNull() &&
+            hintElement.namespaceURI() == ns_message_processing_hints)
+        {
+            d->hints.append(static_cast<QXmppMessage::Hint>(i));
+        }
+    }
+
     // XEP-0333: Chat Markers
     QDomElement markableElement = element.firstChildElement("markable");
     if (!markableElement.isNull())
@@ -708,6 +731,14 @@ void QXmppMessage::toXml(QXmlStreamWriter *xmlWriter) const
         xmlWriter->writeEndElement();
     }
 
+    // XEP-0334: Message Processing Hints
+    Q_FOREACH(const Hint hint, d->hints)
+    {
+        xmlWriter->writeStartElement(hint_types[hint]);
+        xmlWriter->writeAttribute("xmlns", ns_message_processing_hints);
+        xmlWriter->writeEndElement();
+    }
+
     // XEP-0333: Chat Markers
     if (d->markable) {
         xmlWriter->writeStartElement("markable");
@@ -751,4 +782,25 @@ void QXmppMessage::setMessagecarbon(const QXmppMessage& message)
 {
     // make a new shared pointer
     d->carbonMessage = QSharedPointer<QXmppMessage>(new QXmppMessage(message));
+}
+
+bool QXmppMessage::hasHint(const Hint& hint)
+{
+    return d->hints.contains(hint);
+}
+
+void QXmppMessage::addHint(const Hint& hint)
+{
+    if (!hasHint(hint))
+    {
+        d->hints.append(hint);
+    }
+}
+
+void QXmppMessage::removeHint(const Hint& hint)
+{
+    if (hasHint(hint))
+    {
+        d->hints.removeAll(hint);
+    }
 }
