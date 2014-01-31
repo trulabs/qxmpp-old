@@ -30,9 +30,6 @@
 #include "QXmppMessage.h"
 #include "QXmppUtils.h"
 
-#include <QtDebug>
-
-
 static const char* chat_states[] = {
     "",
     "active",
@@ -69,7 +66,7 @@ static const char *ns_xhtml = "http://www.w3.org/1999/xhtml";
 enum StampType
 {
     LegacyDelayedDelivery,  // XEP-0091: Legacy Delayed Delivery
-    DelayedDelivery,        // XEP-0203: Delayed Delivery
+    DelayedDelivery         // XEP-0203: Delayed Delivery
 };
 
 class QXmppMessagePrivate : public QSharedData
