@@ -73,6 +73,13 @@ public:
     /// upon the availability of mechanisms on the server the library will choose
     /// a mechanism.
 
+    enum StreamManagementMode
+    {
+        SMEnabled = 0,
+        SMSessionResumptionEnabled,
+        SMDisabled
+    };
+
     QXmppConfiguration();
     QXmppConfiguration(const QXmppConfiguration &other);
     ~QXmppConfiguration();
@@ -133,6 +140,9 @@ public:
 
     QXmppConfiguration::NonSASLAuthMechanism nonSASLAuthMechanism() const;
     void setNonSASLAuthMechanism(QXmppConfiguration::NonSASLAuthMechanism);
+
+    QXmppConfiguration::StreamManagementMode streamManagementMode() const;
+    void setStreamManagementMode(QXmppConfiguration::StreamManagementMode);
 
     QString saslAuthMechanism() const;
     void setSaslAuthMechanism(const QString &mechanism);
