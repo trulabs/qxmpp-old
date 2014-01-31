@@ -181,7 +181,7 @@ void QXmppPresence::setType(QXmppPresence::Type type)
     d->type = type;
 }
 
-/// \cond
+/// \cond
 void QXmppPresence::parse(const QDomElement &element)
 {
     QXmppStanza::parse(element);
@@ -496,7 +496,7 @@ void QXmppPresence::setStatus(const QXmppPresence::Status& status)
 }
 
 QXmppPresence::Status::Status(QXmppPresence::Status::Type type,
-                             const QString statusText, int priority) :
+                             const QString& statusText, int priority) :
                                 m_type(type),
                                 m_statusText(statusText), m_priority(priority)
 {
