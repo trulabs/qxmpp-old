@@ -42,6 +42,7 @@ private slots:
     void testState_data();
     void testState();
     void testXhtml();
+    void testForwarding();
 };
 
 void tst_QXmppMessage::testBasic_data()
@@ -103,6 +104,7 @@ void tst_QXmppMessage::testBasic()
     QCOMPARE(message.state(), QXmppMessage::None);
     QCOMPARE(message.isAttentionRequested(), false);
     QCOMPARE(message.isReceiptRequested(), false);
+    QCOMPARE(message.hasForwarded(), false);
     QCOMPARE(message.receiptId(), QString());
     QCOMPARE(message.xhtml(), QString());
     serializePacket(message, xml);
@@ -307,6 +309,32 @@ void tst_QXmppMessage::testXhtml()
     parsePacket(message, xml);
     QCOMPARE(message.xhtml(), QLatin1String("<p style=\"font-weight:bold\">hi!</p>"));
     serializePacket(message, xml);
+}
+
+void tst_QXmppMessage::testForwarding()
+{
+    const QByteArray xml("<message type=\"normal\">"
+        "<body>hi!</body>"
+        "<forwarded xmlns=\"urn:xmpp:forward:0\">"
+        "<delay xmlns=\"urn:xmpp:delay\" stamp=\"2010-06-29T08:23:06Z\"/>"
+        "<message xmlns=\"jabber:client\" "
+        "type=\"chat\" "
+        "from=\"bar@example.com/QXmpp\" "
+        "to=\"foo@example.com/QXmpp\">"
+        "<body>ABC</body>"
+        "</message>"
+        "</forwarded>"
+        "</message>");
+
+    QXmppMessage message;
+    parsePacket(message, xml);
+    QCOMPARE(message.hasForwarded(), true);
+
+    QXmppMessage fwd = message.forwarded();
+    QCOMPARE(fwd.stamp(), QDateTime(QDate(2010, 06, 29), QTime(8, 23, 6), Qt::UTC));
+    QCOMPARE(fwd.body(), QString("ABC"));
+    QCOMPARE(fwd.to(), QString("foo@example.com/QXmpp"));
+    QCOMPARE(fwd.from(), QString("bar@example.com/QXmpp"));
 }
 
 QTEST_MAIN(tst_QXmppMessage)
