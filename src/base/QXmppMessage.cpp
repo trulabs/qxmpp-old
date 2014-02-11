@@ -116,9 +116,6 @@ public:
     bool replace;
     QString replaceId;
 
-    // Truphone-Notification
-    bool notification;
-    QString notificationType;
 };
 
 /// Constructs a QXmppMessage.
@@ -145,8 +142,6 @@ QXmppMessage::QXmppMessage(const QString& from, const QString& to, const
     d->marker = NoMarker;
 
     d->replace = false;
-
-    d->notification = false;
 }
 
 /// Constructs a copy of \a other.
@@ -479,10 +474,6 @@ void QXmppMessage::setReplace(const QString& replaceId)
     d->replaceId = replaceId;
 }
 
-bool QXmppMessage::isNotification() const
-{
-    return d->notification;
-}
 
 /// \cond
 void QXmppMessage::parse(const QDomElement &element)
@@ -636,18 +627,6 @@ void QXmppMessage::parse(const QDomElement &element)
             d->replaceId = replaceElement.attribute("id", QString());
         }
     }
-
-    // Truphone-Notification
-    QDomElement notificationElement = element.firstChildElement("notification");
-    if(!notificationElement.isNull())
-    {
-        if(notificationElement.namespaceURI() == ns_check_credit)
-        {
-            d->notification = true;
-            d->notificationType = ns_check_credit;
-        }
-    }
-
 
     QXmppElementList extensions;
     QDomElement xElement = element.firstChildElement("x");
