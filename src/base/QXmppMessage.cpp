@@ -798,6 +798,11 @@ void QXmppMessage::toXml(QXmlStreamWriter *xmlWriter) const
 
     xmlWriter->writeEndElement();
 }
+
+QXmppStanza::StanzaType QXmppMessage::getStanzaType() const
+{
+    return Message;
+}
 /// \endcond
 
 

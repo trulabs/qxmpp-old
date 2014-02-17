@@ -25,6 +25,7 @@ SUBDIRS = \
     qxmpputils \
     qxmppvcardiq \
     qxmppversioniq \
+    qxmppstreammanagement \
     qxmpppep
 
 !isEmpty(QXMPP_AUTOTEST_INTERNAL) {
