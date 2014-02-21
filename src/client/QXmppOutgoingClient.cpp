@@ -102,6 +102,8 @@ public:
     QTimer *pingTimer;
     QTimer *timeoutTimer;
 
+    QMap<QString, QString> iqIds;
+
 private:
     QXmppOutgoingClient *q;
 };
@@ -288,6 +290,7 @@ void QXmppOutgoingClient::_q_socketDisconnected()
 {
     debug("Socket disconnected");
     d->isAuthenticated = false;
+    d->iqIds.clear();
     // Notify the stream management that the socket is in a disconect status
     if(d->streamManagement->isEnabled())
     {
@@ -369,6 +372,15 @@ bool QXmppOutgoingClient::sendPacket(const QXmppStanza &stanza)
 {
     if(QXmppStream::sendPacket(stanza))
     {
+        if( (stanza.getStanzaType() == QXmppStanza::Iq) && isConnected())
+        {
+             QXmppIq iq(static_cast<QXmppIq const &>(stanza));
+             if( iq.type() == QXmppIq::Get || iq.type()== QXmppIq::Set )
+             {
+                d->iqIds.insert(iq.id(),iq.to());
+             }
+        }
+
         if(d->streamManagement->isOutboundEnabled())
         {
             d->streamManagement->stanzaSent(stanza);
@@ -387,6 +399,9 @@ void QXmppOutgoingClient::handleStanza(const QDomElement &nodeRecv)
 
     const QString ns = nodeRecv.namespaceURI();
 
+    // IQ Security check
+    if ( isConnected() && !iQsSecuirityCheck(nodeRecv))
+        return;
     // give client opportunity to handle stanza
     bool handled = false;
     emit elementReceived(nodeRecv, handled);
@@ -756,7 +771,6 @@ void QXmppOutgoingClient::handleStanza(const QDomElement &nodeRecv)
                 } else {
                     emit iqReceived(iqPacket);
                     d->streamManagement->stanzaHandled();
-
                 }
             }
         }
@@ -921,6 +935,42 @@ bool QXmppOutgoingClient::bindResource()
     bind.setResource(configuration().resource());
     d->bindId = bind.id();
     return sendPacket(bind);
+}
+
+bool QXmppOutgoingClient::iQsSecuirityCheck(const QDomElement &element)
+{
+    if( element.tagName() == "iq")
+    {
+        // Validating Info/Query (IQ) stanzas in the Extensible Messaging and Presence Protocol (XMPP)
+        // draft-alkemade-xmpp-iq-validation-00
+        // http://datatracker.ietf.org/doc/draft-alkemade-xmpp-iq-validation/?include_text=1
+
+        QXmppIq iqPacket;
+        iqPacket.parse(element);
+        if(iqPacket.type() == QXmppIq::Result || iqPacket.type() == QXmppIq::Error)
+        {
+            if(!d->iqIds.contains(iqPacket.id())){
+                warning(QString("IQ Security: IQ id %1 does not match. Packet discarded").arg(iqPacket.id()));
+                return false;
+            }else{
+                if( ( iqPacket.from() == d->iqIds.value(iqPacket.id()) ) ||
+                        ( iqPacket.from().isEmpty() ) ||
+                        ( iqPacket.from() == d->config.domain()) ||
+                        ( iqPacket.from() == d->config.jidBare() ) ||
+                        ( iqPacket.from() == d->config.jid() )
+                     )
+                {
+                    d->iqIds.remove(iqPacket.id());
+                }else{
+                    warning(QString("IQ Security: IQ id %1 from %2 does not match. Packet discarded").arg(iqPacket.id()).arg(iqPacket.from()));
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+
+
 }
 
 void QXmppOutgoingClient::handleStreamManagement(const QDomElement &element)
