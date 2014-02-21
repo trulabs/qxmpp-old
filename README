@@ -9,8 +9,10 @@ version 2.1 or later.
 ADDITIONAL XEP(s)!
 ------------------
 At Truphone we've added the following XEP support:
+* XEP-0060 Filtered Notifications
 * XEP-0152 Reachability Addresses
 * XEP-0163 Personal Eventing Protocol (PEP)
+* XEP-0198 Stream Management
 * XEP-0280 Message Carbons
 * XEP-0297 Stanza Forwarding
 * XEP-0308 Last Message Correction
